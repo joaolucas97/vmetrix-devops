@@ -1,0 +1,39 @@
+name: misc-utils
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'misc-utils/**'
+  pull_request:
+    paths:
+      - 'misc-utils/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-misc-utils-${{ hashFiles('misc-utils/pom.xml') }}
+
+      - name: Build and test
+        run: mvn clean install -B
+        working-directory: misc-utils
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: misc-utils-jar
+          path: misc-utils/target/misc-utils-*.jar
+          retention-days: 7

@@ -1,0 +1,39 @@
+name: calc-lib
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'calc-lib/**'
+  pull_request:
+    paths:
+      - 'calc-lib/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-calc-lib-${{ hashFiles('calc-lib/pom.xml') }}
+
+      - name: Build and test
+        run: mvn clean install -B
+        working-directory: calc-lib
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: calc-lib-jar
+          path: calc-lib/target/calc-lib-*.jar
+          retention-days: 7
