@@ -12,7 +12,6 @@ on:
       - 'calc-lib/**'
 
 jobs:
-  # Se calc-lib mudou, builda ela primeiro
   build-calc-lib:
     runs-on: ubuntu-latest
     outputs:
@@ -37,13 +36,6 @@ jobs:
         with:
           java-version: '17'
           distribution: temurin
-
-      - name: Cache Maven
-        if: steps.check.outputs.changed == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-calc-lib-${{ hashFiles('calc-lib/pom.xml') }}
 
       - name: Build and test calc-lib
         if: steps.check.outputs.changed == 'true'
@@ -76,7 +68,6 @@ jobs:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-svc-calc-${{ hashFiles('svc-calc/pom.xml') }}
 
-      # Baixa o JAR da lib se foi publicado neste run
       - name: Download calc-lib JAR
         if: needs.build-calc-lib.outputs.jar-uploaded == 'true'
         uses: actions/download-artifact@v4
@@ -92,8 +83,7 @@ jobs:
             -DgroupId=com.vmetrix \
             -DartifactId=calc-lib \
             -Dversion=1.0.0 \
-            -Dpackaging=jar \
-            -B
+            -Dpackaging=jar -B
 
       - name: Prepare .m2 for Docker build
         run: |
@@ -124,6 +114,7 @@ jobs:
             gitops/overlays/production/kustomization.yaml
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GHCR_TOKEN }}@github.com/${{ github.repository }}
           git add gitops/overlays/production/kustomization.yaml
           git diff --staged --quiet || git commit -m "ci: update svc-calc image to ${{ github.sha }}"
           git push

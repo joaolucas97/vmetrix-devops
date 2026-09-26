@@ -16,48 +16,31 @@ on:
 jobs:
   build-libs:
     runs-on: ubuntu-latest
-    outputs:
-      calc-lib-changed: ${{ steps.check.outputs.calc_changed }}
-      misc-utils-changed: ${{ steps.check.outputs.misc_changed }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Check which libs changed
-        id: check
-        run: |
-          CHANGED=$(git diff --name-only HEAD~1 HEAD)
-          echo "$CHANGED" | grep -q '^calc-lib/' && echo "calc_changed=true" >> $GITHUB_OUTPUT || echo "calc_changed=false" >> $GITHUB_OUTPUT
-          echo "$CHANGED" | grep -q '^misc-utils/' && echo "misc_changed=true" >> $GITHUB_OUTPUT || echo "misc_changed=false" >> $GITHUB_OUTPUT
 
       - name: Set up Java 17
-        if: steps.check.outputs.calc_changed == 'true' || steps.check.outputs.misc_changed == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: temurin
 
       - name: Build calc-lib
-        if: steps.check.outputs.calc_changed == 'true'
         run: mvn clean install -B
         working-directory: calc-lib
 
+      - name: Build misc-utils
+        run: mvn clean install -B
+        working-directory: misc-utils
+
       - name: Upload calc-lib JAR
-        if: steps.check.outputs.calc_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: calc-lib-jar
           path: calc-lib/target/calc-lib-*.jar
           retention-days: 7
 
-      - name: Build misc-utils
-        if: steps.check.outputs.misc_changed == 'true'
-        run: mvn clean install -B
-        working-directory: misc-utils
-
       - name: Upload misc-utils JAR
-        if: steps.check.outputs.misc_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: misc-utils-jar
@@ -83,30 +66,23 @@ jobs:
           key: ${{ runner.os }}-maven-web-app-${{ hashFiles('web-app/pom.xml') }}
 
       - name: Download calc-lib JAR
-        if: needs.build-libs.outputs.calc-lib-changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: calc-lib-jar
           path: /tmp/calc-lib-jar
 
-      - name: Install calc-lib into local .m2
-        if: needs.build-libs.outputs.calc-lib-changed == 'true'
-        run: |
-          mvn install:install-file \
-            -Dfile=$(ls /tmp/calc-lib-jar/calc-lib-*.jar | grep -v sources) \
-            -DgroupId=com.vmetrix -DartifactId=calc-lib \
-            -Dversion=1.0.0 -Dpackaging=jar -B
-
       - name: Download misc-utils JAR
-        if: needs.build-libs.outputs.misc-utils-changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: misc-utils-jar
           path: /tmp/misc-utils-jar
 
-      - name: Install misc-utils into local .m2
-        if: needs.build-libs.outputs.misc-utils-changed == 'true'
+      - name: Install libs into local .m2
         run: |
+          mvn install:install-file \
+            -Dfile=$(ls /tmp/calc-lib-jar/calc-lib-*.jar | grep -v sources) \
+            -DgroupId=com.vmetrix -DartifactId=calc-lib \
+            -Dversion=1.0.0 -Dpackaging=jar -B
           mvn install:install-file \
             -Dfile=$(ls /tmp/misc-utils-jar/misc-utils-*.jar | grep -v sources) \
             -DgroupId=com.vmetrix -DartifactId=misc-utils \
@@ -144,6 +120,7 @@ jobs:
             gitops/overlays/production/kustomization.yaml
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GHCR_TOKEN }}@github.com/${{ github.repository }}
           git add gitops/overlays/production/kustomization.yaml
           git diff --staged --quiet || git commit -m "ci: update web-app image to ${{ github.sha }}"
           git push
