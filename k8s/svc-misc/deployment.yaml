@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-misc
+  labels:
+    app: svc-misc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: svc-misc
+  template:
+    metadata:
+      labels:
+        app: svc-misc
+    spec:
+      containers:
+        - name: svc-misc
+          image: vmetrix/svc-misc:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 5
