@@ -12,4 +12,4 @@ images:
   - name: vmetrix/svc-misc
     newTag: local  # svc-misc
   - name: vmetrix/web-app
-    newTag: local  # web-app
+    newTag: de046ecbcc04ab8f128d70cb8f7ffd2617e386aa  # web-app
