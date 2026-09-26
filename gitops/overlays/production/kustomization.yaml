@@ -8,7 +8,7 @@ resources:
 
 images:
   - name: vmetrix/svc-calc
-    newTag: local
+    newTag: v2
   - name: vmetrix/svc-misc
     newTag: local
   - name: vmetrix/web-app
