@@ -8,8 +8,10 @@ resources:
 
 images:
   - name: vmetrix/svc-calc
+    newName: ghcr.io/joaolucas97/svc-calc
     newTag: c7ce570a89e1ae2ec0f4d61f458ca82b01b18da3  # svc-calc
   - name: vmetrix/svc-misc
     newTag: local  # svc-misc
   - name: vmetrix/web-app
+    newName: ghcr.io/joaolucas97/web-app
     newTag: c7ce570a89e1ae2ec0f4d61f458ca82b01b18da3  # web-app
