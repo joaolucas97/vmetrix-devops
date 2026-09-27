@@ -15,7 +15,7 @@ spec:
       containers:
         - name: svc-misc
           image: vmetrix/svc-misc:local
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
           resources:
